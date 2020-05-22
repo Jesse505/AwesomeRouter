@@ -1,0 +1,2 @@
+include ':app', ':router-annotation', ':router-compiler'
+rootProject.name='AwesomeRouter'
