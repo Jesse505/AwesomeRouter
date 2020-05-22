@@ -6,7 +6,7 @@ import android.os.Bundle;
 
 import com.android.jesse.router_annotation.Router;
 
-@Router(path = "/login/LoginActivity")
+@Router(path = "/account/LoginActivity")
 public class LoginActivity extends AppCompatActivity {
 
     @Override

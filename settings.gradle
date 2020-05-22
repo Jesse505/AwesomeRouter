@@ -1,2 +1,2 @@
-include ':app', ':router-annotation', ':router-compiler'
+include ':app', ':router-annotation', ':router-compiler', ':router-api'
 rootProject.name='AwesomeRouter'
