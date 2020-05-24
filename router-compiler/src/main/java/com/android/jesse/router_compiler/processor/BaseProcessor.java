@@ -53,7 +53,7 @@ public abstract class BaseProcessor extends AbstractProcessor {
         filer = processingEnvironment.getFiler();
         logger = new Logger(processingEnvironment.getMessager());
 
-        String name = processingEnvironment.getOptions().get("moduleName");
+        String name = processingEnvironment.getOptions().get(Consts.KEY_MODULE_NAME);
         logger.info("模块的名称：" + name);
     }
 

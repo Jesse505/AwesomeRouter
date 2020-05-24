@@ -9,6 +9,7 @@ import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -121,30 +122,37 @@ public class RouterProcessor extends BaseProcessor {
         // 判断是否有需要生成的类文件
         if (MapUtils.isEmpty(tempPathMap)) return;
 
-        ParameterizedTypeName inputMapTypeOfGroup = ParameterizedTypeName.get(
+        //返回值类型
+        TypeName methodReturns = ParameterizedTypeName.get(
                 ClassName.get(Map.class), // Map
                 ClassName.get(String.class), // Map<String,
                 ClassName.get(RouteMeta.class) // Map<String, RouteMeta>
         );
 
-        //参数(Map<String, RouteMeta> atlas)
-        ParameterSpec groupParamSpec = ParameterSpec.builder(inputMapTypeOfGroup, "atlas").build();
-
         // 遍历分组，每一个分组创建一个路径类文件，如：ARouter$$Path$$app
         for (Map.Entry<String, List<RouteMeta>> entry : tempPathMap.entrySet()) {
-            // 方法配置：public void loadInto(Map<String, RouteMeta> atlas) {
-            MethodSpec.Builder methodBuidler = MethodSpec.methodBuilder(Consts.METHOD_LOAD_INTO) // 方法名
+            // 方法配置：public Map<String, RouteMeta> loadPath() {
+            MethodSpec.Builder methodBuidler = MethodSpec.methodBuilder(Consts.METHOD_LOAD_PATH) // 方法名
                     .addAnnotation(Override.class) // 重写注解
                     .addModifiers(Modifier.PUBLIC) // public修饰符
-                    .addParameter(groupParamSpec); // 参数
+                    .returns(methodReturns); // 返回值类型
+
+            // 遍历之前：Map<String, RouterBean> pathMap = new HashMap<>();
+            methodBuidler.addStatement("$T<$T, $T> $N = new $T<>()",
+                    ClassName.get(Map.class),
+                    ClassName.get(String.class),
+                    ClassName.get(RouteMeta.class),
+                    Consts.PATH_PARAMETER_NAME,
+                    HashMap.class);
 
             List<RouteMeta> pathList = entry.getValue();
             // 方法内容配置（遍历每个分组中每个路由详细路径）
             for (RouteMeta bean : pathList) {
-                // atlas.put("/app/MainActivity", RouteMeta.build(
+                // pathMap.put("/app/MainActivity", RouteMeta.build(
                 //        RouteMeta.Type.ACTIVITY, MainActivity.class, "/app/MainActivity", "app"));
                 methodBuidler.addStatement(
-                        "atlas.put($S, $T.build($T.$L, $T.class, $S, $S))",
+                        "$N.put($S, $T.build($T.$L, $T.class, $S, $S))",
+                        Consts.PATH_PARAMETER_NAME,
                         bean.getPath(), // "/app/MainActivity"
                         ClassName.get(RouteMeta.class), // RouteMeta
                         ClassName.get(RouteMeta.Type.class), // RouteMeta.Type
@@ -154,6 +162,9 @@ public class RouterProcessor extends BaseProcessor {
                         bean.getGroup() // 组名
                 );
             }
+
+            // 遍历之后：return pathMap;
+            methodBuidler.addStatement("return $N", Consts.PATH_PARAMETER_NAME);
 
             // 最终生成的类文件名
             String finalClassName = Consts.GROUP_FILE_NAME + entry.getKey();
