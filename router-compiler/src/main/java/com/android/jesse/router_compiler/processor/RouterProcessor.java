@@ -68,11 +68,13 @@ public class RouterProcessor extends BaseProcessor {
 
     private void parseElements(Set<? extends Element> elements) throws IOException {
 
-        // 通过Element工具类，获取Activity、Callback类型
+        // 通过Element工具类，获取Activity、Provider类型
         TypeElement activityType = elementUtils.getTypeElement(Consts.ACTIVITY);
+        TypeElement providerType = elementUtils.getTypeElement(Consts.IPROVIDER);
 
         // 显示类信息（获取被注解节点，类节点）这里也叫自描述 Mirror
         TypeMirror activityMirror = activityType.asType();
+        TypeMirror providerMirror = providerType.asType();
 
         // 遍历节点
         for (Element element : elements) {
@@ -93,9 +95,11 @@ public class RouterProcessor extends BaseProcessor {
             // 类型工具类方法isSubtype，相当于instance一样
             if (typeUtils.isSubtype(elementMirror, activityMirror)) {
                 bean.setType(RouteMeta.Type.ACTIVITY);
+            } else if (typeUtils.isSubtype(elementMirror, providerMirror)) {
+                bean.setType(RouteMeta.Type.PROVIDER);
             } else {
                 // 不匹配抛出异常，这里谨慎使用！考虑维护问题
-                throw new RuntimeException("@ARouter注解目前仅限用于Activity类之上");
+                throw new RuntimeException("@ARouter注解目前仅限用于Activity类之上或者实现了IProvider接口的类之上");
             }
 
             // 赋值临时map存储，用来存放路由组Group对应的详细Path类对象集合
@@ -109,13 +113,12 @@ public class RouterProcessor extends BaseProcessor {
     }
 
     /**
-     * 生成路由组Group类文件，如：Router$$Group$$app
-     * public class Router$$Group$$app implements IRouteGroup {
+     * 生成路由组Group类文件，如：AwesomeRouter$$Group$$app
+     * public class AwesomeRouter$$Group$$app implements IRouteGroup {
      *
-     *  @Override
-     *  public void loadInto(Map<String, RouteMeta> atlas) {
-     *      atlas.put("/app/MainActivity", RouteMeta.build(RouteMeta.Type.ACTIVITY, MainActivity.class, "/app/MainActivity", "app"));
-     *  }
+     * @Override public void loadInto(Map<String, RouteMeta> atlas) {
+     * atlas.put("/app/MainActivity", RouteMeta.build(RouteMeta.Type.ACTIVITY, MainActivity.class, "/app/MainActivity", "app"));
+     * }
      * }
      */
     private void createGroupFile(TypeElement groupType) throws IOException {
@@ -129,7 +132,7 @@ public class RouterProcessor extends BaseProcessor {
                 ClassName.get(RouteMeta.class) // Map<String, RouteMeta>
         );
 
-        // 遍历分组，每一个分组创建一个路径类文件，如：ARouter$$Path$$app
+        // 遍历分组，每一个分组创建一个路径类文件，如：AwesomeRouter$$Group$$app
         for (Map.Entry<String, List<RouteMeta>> entry : tempPathMap.entrySet()) {
             // 方法配置：public Map<String, RouteMeta> loadPath() {
             MethodSpec.Builder methodBuidler = MethodSpec.methodBuilder(Consts.METHOD_LOAD_PATH) // 方法名

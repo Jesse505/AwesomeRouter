@@ -8,7 +8,7 @@ import android.view.View;
 import com.android.jesse.router_annotation.Router;
 import com.android.jesse.router_api.core.AwesomeRouter;
 
-@Router(path = "/account/LoginActivity")
+@Router(path = "/user/LoginActivity")
 public class LoginActivity extends AppCompatActivity {
 
     @Override

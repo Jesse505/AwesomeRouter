@@ -10,6 +10,7 @@ import android.util.Log;
 import android.util.LruCache;
 
 import com.android.jesse.router_annotation.model.RouteMeta;
+import com.android.jesse.router_api.template.IProvider;
 import com.android.jesse.router_api.template.IRouteGroup;
 import com.android.jesse.router_api.utils.Consts;
 
@@ -32,12 +33,15 @@ public final class AwesomeRouter {
     private LruCache<String, IRouteGroup> groupCache;
     // Lru缓存，key:路径, value:RouteMeta
     private LruCache<String, RouteMeta> pathCache;
+    //Lru缓存，key:路径，value:IProvider
+    private LruCache<String, IProvider> iProviderCache;
 
     private volatile static AwesomeRouter instance;
 
     private AwesomeRouter() {
         groupCache = new LruCache<>(20);
         pathCache = new LruCache<>(200);
+        iProviderCache = new LruCache<>(200);
     }
 
     public static AwesomeRouter getInstance() {
@@ -81,14 +85,14 @@ public final class AwesomeRouter {
                     routeGroup = (IRouteGroup) clazz.newInstance();
                 } catch (Exception e) {
                     e.printStackTrace();
-                    throw new RuntimeException("路由路径加载失败");
+                    throw new RuntimeException("路由路径加载失败" + e.getMessage());
                 }
                 groupCache.put(group, routeGroup);
             }
 
             Map<String, RouteMeta> routeMetaMap = routeGroup.loadPath();
             if (routeMetaMap.isEmpty() || routeMetaMap.get(path) == null) {
-                throw new RuntimeException("路由路径加载失败");
+                throw new RuntimeException("路由路径加载失败,没有找到对应的class文件");
             } else {
                 routeMeta = routeMetaMap.get(path);
                 for (RouteMeta meta : routeMetaMap.values()) {
@@ -112,6 +116,18 @@ public final class AwesomeRouter {
                         }
                     });
                     break;
+                case PROVIDER:
+                    IProvider instance = iProviderCache.get(routeMeta.getPath());
+                    if (instance == null) {
+                        try {
+                            instance = (IProvider) routeMeta.getClazz().newInstance();
+                            instance.init(context);
+                            iProviderCache.put(routeMeta.getPath(), instance);
+                        } catch (Exception e) {
+                            throw new RuntimeException("Init provider failed! " + e.getMessage());
+                        }
+                    }
+                    return instance;
             }
         }
 

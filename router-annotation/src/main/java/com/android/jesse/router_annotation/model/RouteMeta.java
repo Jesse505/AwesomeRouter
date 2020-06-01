@@ -7,7 +7,7 @@ public class RouteMeta {
 
     public enum Type {
         ACTIVITY,
-        CALL
+        PROVIDER
     }
 
     // 枚举类型：Activity
