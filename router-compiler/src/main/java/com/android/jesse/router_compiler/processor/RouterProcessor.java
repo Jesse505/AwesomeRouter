@@ -116,8 +116,11 @@ public class RouterProcessor extends BaseProcessor {
      * 生成路由组Group类文件，如：AwesomeRouter$$Group$$app
      * public class AwesomeRouter$$Group$$app implements IRouteGroup {
      *
-     * @Override public void loadInto(Map<String, RouteMeta> atlas) {
-     * atlas.put("/app/MainActivity", RouteMeta.build(RouteMeta.Type.ACTIVITY, MainActivity.class, "/app/MainActivity", "app"));
+     * @Override
+     * public Map<String, RouteMeta> loadPath() {
+     *  Map<String, RouteMeta> pathMap = new HashMap<>();
+     *  pathMap.put("/app/MainActivity", RouteMeta.build(RouteMeta.Type.ACTIVITY, MainActivity.class, "/app/MainActivity", "app"));
+     *  return pathMap;
      * }
      * }
      */

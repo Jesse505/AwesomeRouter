@@ -72,12 +72,16 @@ public final class AwesomeRouter {
 
     Object navigation(@NonNull final Context context, final PostCard postCard) {
 
+        //根据path地址从缓存里拿RouteMeta对象
         RouteMeta routeMeta = pathCache.get(path);
 
+        //如果缓存里没有对应的RouteMeta对象
         if (null == routeMeta) {
+            //对应的group类的全路径
             String groupClassName = Consts.PACKAGE_OF_GENERATE_FILE + Consts.GROUP_FILE_PREFIX_NAME + group;
-            Log.i("AwesomeRouter", "groupClassName -> " + groupClassName);
+            //根据group从缓存里拿IRouteGroup对象
             IRouteGroup routeGroup = groupCache.get(group);
+            //如果缓存中没有拿到IRouteGroup对象，就通过group的全路径去加载类，并将IRouteGroup对象加入到缓存中
             if (routeGroup == null) {
                 Class<?> clazz = null;
                 try {
@@ -89,12 +93,14 @@ public final class AwesomeRouter {
                 }
                 groupCache.put(group, routeGroup);
             }
-
+            //通过IRouteGroup对象的loadPath方法拿到path地址和RouteMeta对象的映射map
             Map<String, RouteMeta> routeMetaMap = routeGroup.loadPath();
             if (routeMetaMap.isEmpty() || routeMetaMap.get(path) == null) {
                 throw new RuntimeException("路由路径加载失败,没有找到对应的class文件");
             } else {
+                //根据path地址，从map取出RouteMeta对象
                 routeMeta = routeMetaMap.get(path);
+                //加入缓存
                 for (RouteMeta meta : routeMetaMap.values()) {
                     pathCache.put(meta.getPath(), meta);
                 }
@@ -117,7 +123,9 @@ public final class AwesomeRouter {
                     });
                     break;
                 case PROVIDER:
+                    //根据path地址从provider缓存中拿到IProvider对象
                     IProvider instance = iProviderCache.get(routeMeta.getPath());
+                    //如果从缓存中没有拿到IProvider对象，就通过newInstance的方式获取对象，并加入缓存
                     if (instance == null) {
                         try {
                             instance = (IProvider) routeMeta.getClazz().newInstance();
